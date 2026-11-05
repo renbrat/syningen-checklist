@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Syningen</title>
-<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -199,7 +198,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
   <section id="panelCheck" class="formwrap" hidden>
     <div class="formhead">
       <h2>Sjekkpunkter før avreise</h2>
-      <p class="muted">Kryss av mens du går gjennom hytta, ett rom om gangen. Alle som er innlogget ser de samme avkryssingene.</p>
+      <p class="muted">Kryss av mens du går gjennom hytta, ett rom om gangen. Alle som har siden åpen ser de samme avkryssingene.</p>
     </div>
     <div class="prog" aria-live="polite">
       <div class="prog-top"><span id="progTxt">0 av 0 punkter</span><span id="progPct">0 %</span></div>
@@ -267,6 +266,56 @@ var SPOTS=[
 ];
 var ZONES=['Oppe','Hems','Kjeller'];
 var NAME_KEY='syningen-navn';
+
+/* Supabase. Nøkkelen er den offentlige (publishable) nøkkelen og skal ligge i siden. */
+var SB_URL='https://mdvwksnmxluqfnbbhlqg.supabase.co';
+var SB_KEY='sb_publishable_4Z_zBD2GsOK4eN6PiSXFBw_M6incvqU';
+
+function sbHeaders(extra){
+  var h={apikey:SB_KEY};
+  if(extra){for(var k in extra)h[k]=extra[k];}
+  return h;
+}
+async function sbFetch(path,opts){
+  var res=await fetch(SB_URL+path,opts);
+  if(!res.ok){
+    var err=new Error('HTTP '+res.status);
+    err.status=res.status;
+    err.code=res.status===413?'too_large':res.status===429?'rate_limited':res.status>=500?'store_unavailable':'';
+    throw err;
+  }
+  return res;
+}
+var api={
+  async loadAll(){
+    var res=await sbFetch('/rest/v1/kv?select=path,data',{headers:sbHeaders()});
+    return await res.json();
+  },
+  async setDoc(path,data){
+    await sbFetch('/rest/v1/kv?on_conflict=path',{
+      method:'POST',
+      headers:sbHeaders({'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'}),
+      body:JSON.stringify({path:path,data:data,updated_at:new Date().toISOString()})
+    });
+  },
+  async setChecks(patch){
+    await sbFetch('/rest/v1/rpc/set_checks',{
+      method:'POST',
+      headers:sbHeaders({'Content-Type':'application/json'}),
+      body:JSON.stringify({patch:patch})
+    });
+  },
+  async uploadPhoto(key,blob){
+    await sbFetch('/storage/v1/object/photos/'+key+'.jpg',{
+      method:'POST',
+      headers:sbHeaders({'Content-Type':'image/jpeg','x-upsert':'true'}),
+      body:blob
+    });
+  },
+  photoUrl(key,v){
+    return SB_URL+'/storage/v1/object/public/photos/'+key+'.jpg?v='+encodeURIComponent(v||'');
+  }
+};
 var ROOMS=[
   {key:'kjokken',name:'Kjøkken',items:[
     'Fjerne all mat som går ut på dato',
@@ -351,6 +400,7 @@ function ago(ymd){
 function shortDate(ymd){var d=parseYmd(ymd);return d?fShort.format(d):'';}
 
 var db=null,assets=null,canWrite=null;
+var epoch=0;
 var status=null,spotData={};
 var heard={status:false,spots:false},fresh={status:false};
 var unreachable=false,dbError='';
@@ -358,13 +408,6 @@ var mode='view';
 var drafts=new Map();
 var saving=false,barMsg='',barErr=false,progress='';
 var cards={},rows={};
-
-async function use(name){
-  try{
-    if(!window.claude||!window.claude.use)return null;
-    return (await window.claude.use(name))||null;
-  }catch(e){return null;}
-}
 
 function setImg(img,ph,src,def){
   if(src){
@@ -500,7 +543,7 @@ function renderStatus(){
 
 function updateSpot(key){
   var d=spotData[key],dr=drafts.get(key);
-  var oldSrc=d&&d.assetId?'/_blob/'+d.assetId:null;
+  var oldSrc=d&&d.savedAt?api.photoUrl(key,d.savedAt):null;
   var c=cards[key],r=rows[key];
   if(!c||!r)return;
   var def=!db?'Ingen bilde':(heard.spots?'Ingen bilde ennå':'Henter …');
@@ -637,6 +680,7 @@ function setChecked(id,v){
   if(!canCheck)return;
   checked[id]=v;
   pending[id]=v;
+  epoch++;
   updateChecklist();
   flush();
 }
@@ -648,13 +692,9 @@ async function flush(){
       var patch=pending;
       pending={};
       inflight=patch;
-      var ref=db.doc('checklist/current');
-      try{
-        await ref.update({checked:patch,updatedAt:new Date().toISOString()});
-      }catch(e){
-        await ref.set({checked:Object.assign({},serverChecked,patch),updatedAt:new Date().toISOString()});
-      }
+      await api.setChecks(patch);
       inflight={};
+      epoch++;
       $('checkErr').hidden=true;
     }
   }catch(e){
@@ -666,10 +706,13 @@ async function flush(){
 }
 async function resetChecklist(){
   pending={};inflight={};checked={};
+  epoch++;
   updateChecklist();
   if(!db)return;
-  try{await db.doc('checklist/current').set({checked:{},updatedAt:new Date().toISOString()});}
-  catch(e){$('checkErr').hidden=false;}
+  try{
+    await api.setDoc('checklist/current',{checked:{},updatedAt:new Date().toISOString()});
+    epoch++;
+  }catch(e){$('checkErr').hidden=false;}
 }
 
 function toast(msg){
@@ -750,12 +793,12 @@ function errText(code){
   return 'Sjekk nettverket og prøv igjen.';
 }
 
-async function uploadRetry(blob){
-  try{return await assets.upload(blob,{type:'image/jpeg'});}
+async function uploadRetry(key,blob){
+  try{return await api.uploadPhoto(key,blob);}
   catch(e){
     if(e&&e.code==='store_unavailable'){
       await new Promise(function(r){setTimeout(r,1200);});
-      return await assets.upload(blob,{type:'image/jpeg'});
+      return await api.uploadPhoto(key,blob);
     }
     throw e;
   }
@@ -776,12 +819,13 @@ async function save(){
     progress='Lagrer '+(done+1)+' av '+keys.length+' …';
     updateBar();
     try{
-      var up=await uploadRetry(drafts.get(key).blob);
-      var prev=spotData[key]&&spotData[key].assetId;
-      await db.doc('spots/'+key).set({assetId:up.id,leftAt:date,by:name,savedAt:new Date().toISOString()});
+      var savedAt=new Date().toISOString();
+      await uploadRetry(key,drafts.get(key).blob);
+      await api.setDoc('spots/'+key,{leftAt:date,by:name,savedAt:savedAt});
+      spotData[key]={leftAt:date,by:name,savedAt:savedAt};
+      epoch++;
       drafts.delete(key);
       done++;
-      if(prev&&prev!==up.id){assets.delete(prev).catch(function(){});}
       updateSpot(key);
     }catch(e){
       lastCode=(e&&e.code)||'';
@@ -790,7 +834,11 @@ async function save(){
   }
   var statusFailed=false;
   if(done>0){
-    try{await db.doc('status/current').set({by:name,leftAt:date,note:note,checkDone:totalDone(),checkTotal:TOTAL,savedAt:new Date().toISOString()});}
+    try{
+      var newStatus={by:name,leftAt:date,note:note,checkDone:totalDone(),checkTotal:TOTAL,savedAt:new Date().toISOString()};
+      await api.setDoc('status/current',newStatus);
+      status=newStatus;heard.status=true;epoch++;
+    }
     catch(e){statusFailed=true;lastCode=(e&&e.code)||lastCode;}
   }
   saving=false;
@@ -807,39 +855,38 @@ async function save(){
     barMsg=head+errText(lastCode);
     barErr=true;
   }
-  updateBar();
+  updateAll();
+}
+
+async function refresh(){
+  var e0=epoch;
+  try{
+    var rows=await api.loadAll();
+    if(e0!==epoch&&heard.status)return;
+    var nextSpots={},st=null,ck={};
+    rows.forEach(function(r){
+      if(r.path==='status/current')st=r.data;
+      else if(r.path==='checklist/current')ck=(r.data&&r.data.checked&&typeof r.data.checked==='object')?r.data.checked:{};
+      else if(r.path.indexOf('spots/')===0)nextSpots[r.path.slice(6)]=r.data;
+    });
+    status=st;
+    spotData=nextSpots;
+    serverChecked=ck;
+    checked=Object.assign({},serverChecked,inflight,pending);
+    heard.status=true;heard.spots=true;fresh.status=true;
+    unreachable=false;dbError='';
+    updateAll();
+    updateChecklist();
+  }catch(e){
+    if(!heard.status)unreachable=true;
+    renderStatus();
+  }
 }
 
 function subscribe(){
-  var timer=setTimeout(function(){
-    if(!fresh.status){unreachable=true;renderStatus();}
-  },10000);
-  db.doc('status/current').onSnapshot(function(s){
-    status=s.exists?s.data():null;
-    heard.status=!s.metadata.fromCache||s.exists;
-    if(!s.metadata.fromCache){fresh.status=true;unreachable=false;clearTimeout(timer);}
-    updateAll();
-  },function(e){
-    dbError=(e&&e.code)||'feil';
-    clearTimeout(timer);
-    renderStatus();
-  });
-  db.doc('checklist/current').onSnapshot(function(s){
-    var d=s.exists?s.data():null;
-    serverChecked=d&&d.checked&&typeof d.checked==='object'?d.checked:{};
-    checked=Object.assign({},serverChecked,inflight,pending);
-    updateChecklist();
-  },function(){});
-  db.collection('spots').onSnapshot(function(q){
-    var next={};
-    q.docs.forEach(function(d){next[d.id]=d.data();});
-    spotData=next;
-    heard.spots=!q.metadata.fromCache||q.size>0;
-    updateAll();
-  },function(e){
-    dbError=(e&&e.code)||'feil';
-    renderStatus();
-  });
+  refresh();
+  setInterval(function(){if(!document.hidden&&!saving&&!flushing)refresh();},15000);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)refresh();});
 }
 
 async function init(){
@@ -873,10 +920,9 @@ async function init(){
   document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('lb').hidden)closeLb();});
   $('panelReg').addEventListener('submit',function(e){e.preventDefault();});
 
-  db=await use('db');
-  assets=await use('assets');
-  var user=await use('user');
-  try{canWrite=user?await user.can('data.write'):null;}catch(e){canWrite=null;}
+  db=api;
+  assets=api;
+  canWrite=true;
 
   canCheck=!db||canWrite!==false;
   var canReg=!!db&&!!assets&&canWrite!==false;
