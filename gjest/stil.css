@@ -1,0 +1,142 @@
+/* Gjestesiden for Syningen. Farger fra index.html i roten. Bare systemfonter. */
+:root{
+  --bg:#E8EDEA;
+  --surface:#F5F8F6;
+  --surface2:#DCE4DF;
+  --ink:#15201C;
+  --muted:#55645C;
+  --line:#C4CFC8;
+  --accent:#9A2B24;
+  --accent-ink:#FFFFFF;
+  --ok:#25704A;
+  --ok-soft:#D4E8DC;
+  --warn:#8F5A0C;
+  --warn-soft:#F2E3C6;
+  --font-body:system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  --font-mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#121816;
+    --surface:#1B2320;
+    --surface2:#26302C;
+    --ink:#E4ECE7;
+    --muted:#9CAAA3;
+    --line:#33403A;
+    --accent:#E5766C;
+    --accent-ink:#1A0B09;
+    --ok:#6CC594;
+    --ok-soft:#1E3A2C;
+    --warn:#E5B35E;
+    --warn-soft:#3B2E14;
+    color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:12px;-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font:17px/1.55 var(--font-body);
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:calc(32px + env(safe-area-inset-bottom,0px));
+}
+.wrap{
+  max-width:720px;margin:0 auto;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+}
+img{max-width:100%;height:auto}
+[hidden]{display:none!important}
+a{color:var(--accent);text-underline-offset:3px}
+a:focus-visible,button:focus-visible,main:focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:4px}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.skip{position:absolute;left:12px;top:-60px;z-index:10;background:var(--ink);color:var(--bg);padding:12px 16px;border-radius:6px;font-weight:600}
+.skip:focus{top:12px}
+
+/* Topp */
+.top{padding-top:16px;padding-bottom:8px}
+.lang{display:flex;gap:6px;border:1px solid var(--line);border-radius:999px;padding:4px;background:var(--surface);width:max-content;max-width:100%;margin-bottom:22px}
+.lang button{font:600 1rem/1 var(--font-body);border:0;background:transparent;color:var(--muted);padding:0 16px;min-height:44px;min-width:44px;border-radius:999px;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.eyebrow{font:500 .78rem/1.2 var(--font-mono);text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin:0}
+h1{font:800 clamp(2.1rem,9vw,3.2rem)/1.05 var(--font-body);letter-spacing:-.025em;margin:8px 0 10px;text-wrap:balance}
+.lead{margin:0 0 20px;color:var(--muted);font-size:1.02rem}
+
+/* Innholdsfortegnelse: store trykkflater */
+.toc ol{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.toc a{display:flex;align-items:center;gap:10px;min-height:56px;padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-radius:8px;color:var(--ink);text-decoration:none;font-weight:600;line-height:1.2}
+.toc a.hot{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.toc .num,.sek h2 .num{font:500 .8rem/1 var(--font-mono);color:inherit;opacity:.7;flex:none}
+
+/* Seksjoner */
+main{display:block;outline:none}
+.sek{padding-top:28px;margin-top:20px;border-top:1px solid var(--line)}
+.sek h2{font:800 1.65rem/1.15 var(--font-body);letter-spacing:-.015em;margin:0 0 6px;display:flex;align-items:baseline;gap:10px;text-wrap:balance}
+.sub{margin-top:22px}
+.sub h3{font:700 1.2rem/1.25 var(--font-body);margin:0 0 8px}
+p{margin:0 0 12px}
+ul,ol{margin:0 0 12px;padding-left:1.3em}
+li{margin:0 0 6px;padding-left:2px}
+ol.steps{list-style:none;padding:0;counter-reset:steg;display:grid;gap:8px}
+ol.steps li{counter-increment:steg;display:grid;grid-template-columns:32px minmax(0,1fr);gap:10px;align-items:start;margin:0;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+ol.steps li::before{content:counter(steg);display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--ink);color:var(--bg);font:700 .9rem/1 var(--font-body);margin-top:1px}
+
+.callout{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-left:4px solid var(--line);background:var(--surface);border-radius:6px;margin:0 0 12px}
+.callout.warn{border-left-color:var(--warn);background:var(--warn-soft);color:var(--ink)}
+.callout .ico{flex:none;display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--warn);color:var(--bg);font-weight:800;line-height:1;margin-top:1px}
+
+.fig{margin:4px 0 14px}
+.fig img{display:block;border-radius:8px;border:1px solid var(--line);max-height:300px;width:auto;background:var(--surface2)}
+.fig figcaption{font-size:.88rem;color:var(--muted);margin-top:6px;font-style:italic}
+
+/* «I denne delen» */
+.subnav ul{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.subnav li{margin:0;padding:0}
+.subnav a{display:inline-flex;align-items:center;min-height:44px;padding:8px 14px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);text-decoration:none;font-weight:600;font-size:.95rem}
+
+/* Når noe ikke fungerer: kort */
+.sek-problemer .sub{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;padding:14px 14px 4px;margin-top:12px}
+.sek-problemer .sub ol.steps li{background:var(--bg)}
+
+/* Kontakt og knapper */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:12px 18px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--ink);font:700 1.05rem/1.2 var(--font-body);text-decoration:none;cursor:pointer}
+.btn.call{background:var(--ok);border-color:var(--ok);color:var(--bg);min-width:200px}
+.kontakt{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;margin:0 0 12px;display:grid;gap:6px;justify-items:start}
+.kontakt.kort{background:transparent;border:0;padding:0}
+.kontakt p{margin:0}
+.knavn{font-weight:700;font-size:1.1rem}
+.krolle{color:var(--muted);font-size:.95rem}
+.ktlf{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.kbtns{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+
+.up{margin:18px 0 0}
+.up a{display:inline-flex;align-items:center;min-height:44px;font-size:.95rem;color:var(--muted)}
+
+.foot{margin-top:36px;padding-top:20px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.ver{margin:0;font:400 .75rem/1.3 var(--font-mono);color:var(--muted)}
+
+/* Utskrift: til permen på hytta */
+@media print{
+  :root{--bg:#fff;--surface:#fff;--surface2:#fff;--ink:#000;--muted:#333;--line:#999;--accent:#000;--accent-ink:#000;--ok:#000;--warn:#000;--warn-soft:#fff;color-scheme:light}
+  @page{margin:16mm 14mm}
+  body{font-size:11.5pt;line-height:1.45;padding:0;background:#fff;color:#000}
+  .wrap{max-width:none;padding:0}
+  .lang,.skip,.up,.subnav,#skrivut,.kbtns,.btn.call{display:none!important}
+  .toc a,.toc a.hot{min-height:0;padding:2px 0;border:0;background:none;color:#000}
+  .toc ol{display:block;columns:2}
+  .sek{break-before:page;border-top:0;padding-top:0;margin-top:0}
+  .sub,.callout,ol.steps li,.fig,.kontakt{break-inside:avoid}
+  .sek-problemer .sub{border:1px solid #999;border-left:4px solid #000}
+  ol.steps li{border:0;padding:2px 0}
+  ol.steps li::before{background:none;color:#000;border:1px solid #000}
+  .callout.warn{border-left-color:#000;background:none}
+  .callout .ico{background:#000;color:#fff}
+  .fig img{max-height:70mm}
+  a{color:#000;text-decoration:none}
+  a[href^="https://"]::after{content:" (" attr(href) ")";font-size:.85em}
+  .kontakt.kort{display:block}
+  .foot{border-top:1px solid #999}
+}

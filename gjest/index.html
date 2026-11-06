@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="color-scheme" content="light dark">
+<title>Syningen · Gjest / Gast / Guest</title>
+<link rel="icon" href="data:,">
+<!-- ?v=3: øk tallet når stil.css, kontakt.js eller app.js endres, så nettleserne henter ny versjon -->
+<link rel="stylesheet" href="stil.css?v=3">
+<script src="kontakt.js?v=3" defer></script>
+<script src="app.js?v=3" defer></script>
+</head>
+<body>
+<a class="skip" href="#innhold" id="hopp">Hopp til innholdet</a>
+
+<header class="top">
+  <div class="wrap">
+    <nav class="lang" aria-label="Språk / Sprache / Language" id="sprak">
+      <button type="button" data-lang="no" lang="nb" aria-pressed="true">Norsk</button>
+      <button type="button" data-lang="de" lang="de" aria-pressed="false">Deutsch</button>
+      <button type="button" data-lang="en" lang="en" aria-pressed="false">English</button>
+    </nav>
+    <p class="eyebrow" id="overline">Syningen</p>
+    <h1 id="tittel">Syningen</h1>
+    <p class="lead" id="ingress"></p>
+    <nav class="toc" aria-labelledby="toc-h" id="toc">
+      <h2 class="vh" id="toc-h">Innhold</h2>
+      <ol id="toc-list"></ol>
+    </nav>
+  </div>
+</header>
+
+<main id="innhold" class="wrap" tabindex="-1">
+  <noscript>
+    <p class="callout warn">Denne siden trenger JavaScript. Se Airbnb-meldingen din. · Diese Seite braucht JavaScript. Siehe Ihre Airbnb-Nachricht. · This page needs JavaScript. See your Airbnb message.</p>
+  </noscript>
+</main>
+
+<footer class="foot wrap">
+  <button type="button" class="btn" id="skrivut">Skriv ut</button>
+  <p class="ver" id="ver">Versjon 1</p>
+</footer>
+</body>
+</html>
