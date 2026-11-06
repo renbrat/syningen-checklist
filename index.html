@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* Layout: hyttelogg. Øverst siste avreise som en stemplet loggføring, under den to visninger:
-   bilder gruppert per etasje (Oppe, Hems, Kjeller), og et registreringsskjema med en rad per sted. */
+   bilder gruppert per etasje (Oppe, Annekset, Kjeller), og et registreringsskjema med en rad per sted. */
 :root{
   --bg:#E8EDEA;
   --surface:#F5F8F6;
@@ -102,7 +102,7 @@ h2{text-wrap:balance}
 .zone{display:grid;gap:12px}
 .zone h2{font:600 1.05rem/1.2 var(--font-display);margin:0;display:flex;align-items:center;gap:12px}
 .zone h2::after{content:"";flex:1;height:1px;background:var(--line)}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,170px),1fr));gap:16px 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr));gap:16px 14px}
 .card{margin:0;display:grid;gap:8px;align-content:start;min-width:0}
 .shot{display:block;position:relative;width:100%;aspect-ratio:4/3;padding:0;overflow:hidden;border:1px solid var(--line);border-radius:6px;background:var(--surface2);cursor:zoom-in}
 .shot img{display:block;width:100%;height:100%;object-fit:cover}
@@ -134,6 +134,9 @@ h2{text-wrap:balance}
 .btn{font:600 .9rem/1.2 var(--font-body);border-radius:6px;padding:10px 14px;min-height:44px;cursor:pointer;border:1px solid var(--line);background:transparent;color:var(--ink)}
 .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .btn:disabled{opacity:.5;cursor:default}
+.pickbtn{position:relative;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;text-align:center}
+.pickinput{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px}
+#fatal{color:var(--accent);font-weight:600}
 button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 .bar{position:fixed;left:0;right:0;bottom:0;z-index:10;background:var(--surface);border-top:1px solid var(--line);padding-top:12px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -143,8 +146,10 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 
 .lb{position:fixed;inset:0;z-index:20;background:var(--scrim);color:var(--on-scrim);display:grid;grid-template-rows:1fr auto;gap:12px;padding-top:max(16px,env(safe-area-inset-top,0px));padding-bottom:max(16px,env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 .lbimg{min-height:0;display:grid;place-items:center}
-.lbimg img{max-width:100%;max-height:calc(100dvh - 150px);object-fit:contain;border-radius:4px}
-.lbcap{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.lbimg img{max-width:100%;max-height:calc(100dvh - 200px);object-fit:contain;border-radius:4px}
+.lbcap{display:flex;align-items:flex-end;flex-wrap:wrap;justify-content:space-between;gap:12px}
+.lbbtns{display:flex;gap:8px;flex-wrap:wrap}
+.lbhint{font:400 .75rem/1.35 var(--font-body)!important;opacity:.8;margin-top:2px!important}
 .lbcap p{margin:0;font:400 .85rem/1.35 var(--font-mono);min-width:0}
 .lbcap .btn{color:var(--on-scrim);border-color:var(--on-scrim)}
 
@@ -167,6 +172,14 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .check input{width:22px;height:22px;margin:1px 0 0;accent-color:var(--accent);cursor:pointer}
 .check span{overflow-wrap:anywhere}
 .check.on{background:var(--ok-soft);border-color:transparent}
+.ctext{display:grid;gap:3px;min-width:0}
+.hint{font-style:italic;font-size:.82rem;line-height:1.35;color:var(--muted)}
+.extrahead{display:grid;gap:2px;margin-top:8px}
+.extrahead h4{font:700 1rem/1.2 var(--font-display);margin:0}
+.extrahead p{margin:0;font-size:.85rem}
+.extras .check{background:transparent;border-style:dashed}
+.extras .check.on{background:var(--ok-soft);border-style:solid;border-color:transparent}
+.generalnote{margin:10px 0 0;padding:10px 12px;border-left:3px solid var(--accent);background:var(--surface);border-radius:4px;font-size:.9rem;line-height:1.4}
 .check.on span{color:var(--muted);text-decoration:line-through}
 .roomnav{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
 .checkfoot{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
@@ -191,6 +204,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
   </nav>
 
   <p id="roNote" class="note" hidden>Du har bare lesetilgang. Be den som delte siden om tilgang til å redigere, så kan du registrere avreise.</p>
+  <p id="fatal" class="note" role="alert" hidden></p>
   <p id="toast" class="toast" role="status" hidden></p>
 
   <main id="panelView" class="wrap"></main>
@@ -199,6 +213,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
     <div class="formhead">
       <h2>Sjekkpunkter før avreise</h2>
       <p class="muted">Kryss av mens du går gjennom hytta, ett rom om gangen. Alle som har siden åpen ser de samme avkryssingene.</p>
+      <p class="generalnote"><strong>Generelt:</strong> parkettgulvet er sensitivt for vann. Derfor ikke bruk mye vann når det vaskes.</p>
     </div>
     <div class="prog" aria-live="polite">
       <div class="prog-top"><span id="progTxt">0 av 0 punkter</span><span id="progPct">0 %</span></div>
@@ -245,26 +260,36 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 
 <div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="Bilde i stort format">
   <div class="lbimg"><img id="lbImg" alt=""></div>
-  <div class="lbcap"><p id="lbCap"></p><button type="button" class="btn" id="lbClose">Lukk</button></div>
+  <div class="lbcap">
+    <div><p id="lbCap"></p><p class="lbhint">Du kan også trykke og holde på bildet for å lagre det.</p></div>
+    <div class="lbbtns"><button type="button" class="btn" id="lbSave">Lagre på telefonen</button><button type="button" class="btn" id="lbClose">Lukk</button></div>
+  </div>
 </div>
 
 <script>
 (function(){
 'use strict';
 
+function showFatal(msg){
+  var b=document.getElementById('fatal');
+  if(b){b.textContent='Noe gikk galt på siden: '+msg+'. Last siden på nytt.';b.hidden=false;}
+}
+window.addEventListener('error',function(e){showFatal(e&&e.message?e.message:'ukjent feil');});
+window.addEventListener('unhandledrejection',function(e){showFatal(e&&e.reason&&e.reason.message?e.reason.message:'ukjent feil');});
+
 var SPOTS=[
   {key:'oppe-kjoleskap',zone:'Oppe',label:'Kjøleskap'},
   {key:'oppe-fryser',zone:'Oppe',label:'Fryser'},
   {key:'oppe-krydder',zone:'Oppe',label:'Krydderskuff'},
   {key:'oppe-torrvare',zone:'Oppe',label:'Tørrvareskap'},
-  {key:'hems-kjoleskap',zone:'Hems',label:'Kjøleskap'},
-  {key:'hems-fryser',zone:'Hems',label:'Fryser'},
+  {key:'hems-kjoleskap',zone:'Annekset',label:'Kjøleskap'},
+  {key:'hems-fryser',zone:'Annekset',label:'Fryser'},
   {key:'kjeller-kjoleskap',zone:'Kjeller',label:'Kjøleskap'},
   {key:'kjeller-fryser',zone:'Kjeller',label:'Fryser'},
   {key:'kjeller-mat',zone:'Kjeller',label:'Tørrvarer, mat'},
   {key:'kjeller-forbruk',zone:'Kjeller',label:'Dopapir og kjøkkenrull',hint:'Fyrstikker, kaffefilter og liknende'}
 ];
-var ZONES=['Oppe','Hems','Kjeller'];
+var ZONES=['Oppe','Annekset','Kjeller'];
 var NAME_KEY='syningen-navn';
 
 /* Supabase. Nøkkelen er den offentlige (publishable) nøkkelen og skal ligge i siden. */
@@ -318,53 +343,63 @@ var api={
 };
 var ROOMS=[
   {key:'kjokken',name:'Kjøkken',items:[
-    'Fjerne all mat som går ut på dato',
-    'Rengjøre kjøleskap',
+    'Fjerne all mat fra kjøleskap som går ut på dato',
     'Fjerne ferskvarer som går ut på dato i brød-/kjeksskuff',
     'Tømme all søppel og rengjøre ut søl i skuffen',
     'Sette kaffetrakterdelene i oppvaskmaskinen før avreise',
     'Sette filter og rist til koketoppen i oppvaskmaskinen',
-    'Sette på oppvaskmaskinen og sørg for at symbolet døråpner lyser på programmet']},
+    'Sette på oppvaskmaskinen og sørg for at symbolet døråpner lyser på programmet'],
+   extras:['Rengjøre kjøleskap']},
   {key:'stue',name:'Stue',items:[
     'Tørke støv',
-    'Fjerne alle stearinlys fra vinduskarmen (ikke telys)',
-    'Skru av batteristearinlysene',
-    'Tømme aske i peisen, og dersom glasset er skittent vaskes det. Bruk utstyr som er nede i teknisk rom, se egen veiledning for det.',
+    ['Fjerne alle stearinlys fra vinduskarmen','Det smelter på grunn av sola.'],
+    'Vaske gulvet med parkettsåpe',
+    ['Ta ned alle persienner','Holder varme og kulde ute og beskytter møbler mot solskade.']],
+   extras:[
     'Støvsuge listene med liten kostdel',
-    'Vaske gulvet med såpe for parkett. Ikke bruk veldig våt mopp.',
-    'Ta ned alle gardiner (holder varme og kulde ute og beskytter møbler mot solskade)']},
+    'Støvsuge sofaen og stolene',
+    'Skru av batteristearinlysene',
+    'Tømme aske og rengjøre rutene på peisen']},
   {key:'kjellerstue',name:'Kjellerstue',items:[
     'Tørke støv',
+    'Vaske gulvet med parkettsåpe',
+    'Tømme søppel',
+    'Fjerne all mat fra kjøleskap som går ut på dato'],
+   extras:[
     'Støvsuge sofaen om det har vært en del matspising i kjelleren',
-    'Støvsuge gulvet, og dersom det er mye søl vask med parkettsåpe. Husk å ikke ha mye vann på gulvet',
-    'Fjern all mat som går ut på dato, rengjør kjøleskapet. Kjøleskapet bør være ganske tomt til neste gruppe']},
+    'Rengjøre kjøleskap']},
   {key:'soverom',name:'Soverom',items:[
     'Tørke støv',
+    'Støvsuge gulvet',
+    'Ta ned persienner'],
+   extras:[
     'Støvsuge lister med liten kost',
-    'Støvsuge gulvet (dersom søl, vask med såpe for parkett)',
-    'Ta ned gardiner']},
+    'Ved behov: vask gulvet med parkettsåpe']},
   {key:'bad',name:'Bad',items:[
     'Rengjør speil uten såpe, tørk tørt med vindusklut',
     'Rengjør vask og dusj med Zalo/eddikblanding. Skyll og tørk alt vann med Nal/klut for å unngå skjolder. Det er mye jern og kalk i vannet.',
     'WC vaskes med Zalo/eddikblanding. Der vannet renner ut ved nedskylling blir det lett forkalking og bør vaskes bort',
-    'Rengjør gulvet']},
+    'Rengjør gulvet',
+    'Tømme all søppel fra badene']},
   {key:'badstue',name:'Badstue',items:[
-    'Når badstua har vært i bruk: vask benkene og veggene der ryggen sitter mot med egen badstusåpe. Dette for å unngå inngrodd svette.',
-    'Er det mye søl på vinduet og glassdøra, rengjør det med rent vann og fiberklut. Tørk til slutt.',
-    'Rengjør gulvet til slutt']},
+    'Vask benkene og veggene med egen badstusåpe',
+    'Vask vinduet og glassdøra med vann og tørk til slutt',
+    'Vask gulvet']},
   {key:'gangen',name:'Gangen nede',items:[
     'Gå over at alle personlige eiendeler blir tatt med ved avreise',
     'Tørk ut av hyller som har mye sand og søl i seg',
-    'Støvsuge lister med liten kost',
-    'Rengjør gulvet (riste matten)']},
+    'Rengjør gulvet',
+    'Rist matten'],
+   extras:['Støvsuge lister med liten kost']},
   {key:'teknisk',name:'Vaskerom / teknisk rom',items:[
     'Kluter ol. som ikke blir vasket før avreise må henges opp så det tørkes (helst på skittentøystativet)',
     'Tørke støv',
     'Rengjøre gulvet',
     'Sette ventilasjonen ned på lav']},
   {key:'forlate',name:'Forlate hytta',items:[
-    'Sørg for at alle vinduer er lukket og gardiner trukket ned (også på hemsen oppe)',
+    'Sørg for at alle vinduer er lukket, persienner trukket ned (også i annekset)',
     'Sørg for at alle dører til alle rommene er åpne for å få best mulig luftsirkulasjon',
+    'Ta med all søppel, også det som ofte legges i garasjen',
     'Gå over og se at alle dører og terrassedører er låst',
     'Lås inngangsdøra og heng nøkkelen i nøkkelskapet på veggen rundt hjørnet']}
 ];
@@ -483,18 +518,18 @@ function buildForm(){
       if(s.hint)txt.append(el('div','hint',s.hint));
       var tag=el('span','tag plain','');
       txt.append(tag);
-      var btn=el('button','btn','Ta bilde');
-      btn.type='button';
+      var btn=el('label','btn pickbtn');
+      var btnTxt=el('span',null,'Ta bilde');
       var input=document.createElement('input');
       input.type='file';
       input.accept='image/*';
-      input.hidden=true;
+      input.className='pickinput';
       input.setAttribute('aria-label','Bilde: '+z+', '+s.label);
-      btn.onclick=function(){input.click();};
-      input.onchange=function(){pick(s.key,input.files&&input.files[0]);input.value='';};
-      row.append(thumb,txt,btn,input);
+      input.onchange=function(){var f=input.files&&input.files[0];if(f)pick(s.key,f);};
+      btn.append(btnTxt,input);
+      row.append(thumb,txt,btn);
       list.append(row);
-      rows[s.key]={img:img,ph:ph,tag:tag,btn:btn};
+      rows[s.key]={img:img,ph:ph,tag:tag,btn:btn,btnTxt:btnTxt,input:input};
     });
     sec.append(list);
     host.append(sec);
@@ -556,7 +591,7 @@ function updateSpot(key){
   if(dr){r.tag.className='tag ok';r.tag.textContent='Nytt bilde';}
   else if(d&&d.leftAt){r.tag.className='tag plain';r.tag.textContent='Fra '+shortDate(d.leftAt);}
   else{r.tag.className='tag warn';r.tag.textContent='Mangler bilde';}
-  r.btn.textContent=(dr||d)?'Bytt bilde':'Ta bilde';
+  r.btnTxt.textContent=(dr||d)?'Bytt bilde':'Ta bilde';
 }
 
 function updateBar(){
@@ -564,7 +599,7 @@ function updateBar(){
   var n=drafts.size;
   if(saving){t.textContent=progress;t.className='';}
   else if(barMsg){t.textContent=barMsg;t.className=barErr?'err':'';}
-  else{t.textContent=n+' av '+SPOTS.length+' bilder valgt';t.className='';}
+  else{t.textContent=n+' av '+SPOTS.length+' valgt · lagres når du trykker «Lagre avreise»';t.className='';}
   $('saveBtn').disabled=saving||n===0;
 }
 
@@ -626,19 +661,31 @@ function renderRoom(){
   host.setAttribute('aria-labelledby','rt-'+r.key);
   host.append(el('h3',null,r.name));
   var ul=el('ul','checks');
-  r.items.forEach(function(t,i){
-    var id=itemId(r,i);
+  function addItem(list,id,t){
+    var text=Array.isArray(t)?t[0]:t,note=Array.isArray(t)?t[1]:'';
     var li=el('li');
     var lab=el('label','check');
     var inp=document.createElement('input');
     inp.type='checkbox';
     inp.onchange=function(){setChecked(id,inp.checked);};
-    lab.append(inp,el('span',null,t));
+    var box=el('div','ctext');
+    box.append(el('span',null,text));
+    if(note)box.append(el('em','hint',note));
+    lab.append(inp,box);
     li.append(lab);
-    ul.append(li);
+    list.append(li);
     itemEls[id]={inp:inp,lab:lab};
-  });
+  }
+  r.items.forEach(function(t,i){addItem(ul,itemId(r,i),t);});
   host.append(ul);
+  if(r.extras&&r.extras.length){
+    var eh=el('div','extrahead');
+    eh.append(el('h4',null,'The Bjørg extras'),el('p','muted','Frivillig, og teller ikke med i fremdriften.'));
+    host.append(eh);
+    var xl=el('ul','checks extras');
+    r.extras.forEach(function(t,i){addItem(xl,r.key+'-x'+i,t);});
+    host.append(xl);
+  }
   var nav=el('div','roomnav');
   if(roomIdx<ROOMS.length-1){
     var nx=el('button','btn','Neste: '+ROOMS[roomIdx+1].name+' →');
@@ -722,6 +769,7 @@ function toast(msg){
   setTimeout(function(){t.hidden=true;},7000);
 }
 
+var lbCur=null;
 function openLb(s,src){
   $('lbImg').src=src;
   $('lbImg').alt=s.zone+': '+s.label;
@@ -730,8 +778,34 @@ function openLb(s,src){
   $('lbCap').textContent=s.zone+': '+s.label+stamp;
   $('lb').hidden=false;
   $('lbClose').focus();
+  var cur={key:s.key,url:src,file:null};
+  lbCur=cur;
+  var fname='syningen-'+s.key+'.jpg';
+  fetch(src).then(function(r){return r.blob();}).then(function(b){
+    if(lbCur===cur)cur.file=new File([b],fname,{type:'image/jpeg'});
+  }).catch(function(){});
 }
-function closeLb(){$('lb').hidden=true;$('lbImg').removeAttribute('src');}
+function closeLb(){$('lb').hidden=true;$('lbImg').removeAttribute('src');lbCur=null;}
+async function saveCurrent(){
+  var cur=lbCur;
+  if(!cur)return;
+  var fname='syningen-'+cur.key+'.jpg';
+  try{
+    if(cur.file&&navigator.canShare&&navigator.canShare({files:[cur.file]})){
+      await navigator.share({files:[cur.file],title:'Syningen'});
+      return;
+    }
+  }catch(e){
+    if(e&&e.name==='AbortError')return;
+  }
+  var a=document.createElement('a');
+  a.href=cur.url.replace(/\?v=.*$/,'')+'?download='+encodeURIComponent(fname);
+  a.download=fname;
+  a.rel='noopener';
+  document.body.append(a);
+  a.click();
+  a.remove();
+}
 
 function loadImg(file){
   return new Promise(function(res,rej){
@@ -746,14 +820,14 @@ async function compress(file){
   var bmp;
   try{bmp=await createImageBitmap(file,{imageOrientation:'from-image'});}
   catch(e){bmp=await loadImg(file);}
-  var max=1600;
+  var max=2000;
   var sc=Math.min(1,max/Math.max(bmp.width,bmp.height));
   var w=Math.max(1,Math.round(bmp.width*sc)),h=Math.max(1,Math.round(bmp.height*sc));
   var c=document.createElement('canvas');
   c.width=w;c.height=h;
   c.getContext('2d').drawImage(bmp,0,0,w,h);
   return new Promise(function(res,rej){
-    c.toBlob(function(b){b?res(b):rej(new Error('toBlob'));},'image/jpeg',0.82);
+    c.toBlob(function(b){b?res(b):rej(new Error('toBlob'));},'image/jpeg',0.85);
   });
 }
 function toDataUrl(blob){
@@ -768,8 +842,8 @@ function toDataUrl(blob){
 async function pick(key,file){
   if(!file)return;
   var r=rows[key];
-  r.btn.disabled=true;
-  r.btn.textContent='Behandler …';
+  r.input.disabled=true;
+  r.btnTxt.textContent='Behandler …';
   try{
     var blob=await compress(file);
     var dataUrl=await toDataUrl(blob);
@@ -778,7 +852,8 @@ async function pick(key,file){
   }catch(e){
     barMsg='Kunne ikke lese bildet. Prøv et annet.';barErr=true;
   }finally{
-    r.btn.disabled=false;
+    r.input.value='';
+    r.input.disabled=false;
     updateSpot(key);
     updateBar();
   }
@@ -916,6 +991,7 @@ async function init(){
   };
   $('saveBtn').onclick=save;
   $('lbClose').onclick=closeLb;
+  $('lbSave').onclick=saveCurrent;
   $('lb').onclick=function(e){if(e.target===$('lb')||e.target.className==='lbimg')closeLb();};
   document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('lb').hidden)closeLb();});
   $('panelReg').addEventListener('submit',function(e){e.preventDefault();});
