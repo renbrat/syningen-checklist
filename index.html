@@ -132,6 +132,7 @@ h2{text-wrap:balance}
 .rm{position:absolute;top:3px;right:3px;width:32px;height:32px;border:0;border-radius:50%;background:var(--scrim);color:var(--on-scrim);font-size:20px;line-height:1;cursor:pointer}
 .more{position:absolute;right:6px;bottom:6px;padding:5px 8px;border-radius:999px;background:var(--scrim);color:var(--on-scrim);font:600 .72rem/1 var(--font-mono)}
 .more[hidden]{display:none}
+.ver{margin:24px 0 0;padding:0 max(16px,env(safe-area-inset-left,0px));font:400 .72rem/1.3 var(--font-mono);color:var(--muted);text-align:center}
 .extrabox{display:grid;gap:8px;margin-top:8px}
 .extrabox summary{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:48px;padding:12px;border:1px dashed var(--line);border-radius:8px;cursor:pointer;font:700 1rem/1.2 var(--font-display)}
 .extrabox[open] summary{background:var(--surface)}
@@ -273,6 +274,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
   </div>
 </div>
 
+<p class="ver">Versjon 7 · flere bilder per sted</p>
 <div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="Bilde i stort format">
   <div class="lbimg"><img id="lbImg" alt=""><button type="button" class="lbnav prev" id="lbPrev" aria-label="Forrige bilde" hidden>‹</button><button type="button" class="lbnav next" id="lbNext" aria-label="Neste bilde" hidden>›</button></div>
   <div class="lbcap">
