@@ -19,10 +19,7 @@ feil_lasting: Der Inhalt konnte nicht geladen werden. Schauen Sie in Ihre Airbnb
 
 ### Parken {#parkering}
 
-Sie können an der Hütte parken. Es gibt auch Parkplätze oberhalb der Hütte. Wenn Sie oben parken:
-
-1. Fahren Sie zuerst zur Hütte hinunter und laden Sie das Gepäck aus.
-2. Fahren Sie dann denselben Weg zurück und parken Sie auf den Plätzen oberhalb der Hütte.
+Sie können an der Hütte parken. Es gibt auch Parkplätze oberhalb der Hütte.
 
 ### Mautstraße {#bom}
 
@@ -48,7 +45,7 @@ Ist die Straße bei Ihrer Ankunft nicht geräumt? Rufen Sie an:
 
 ### So kommen Sie hinein {#inn}
 
-Die Tür hat ein Codeschloss. Den Code bekommen Sie über Airbnb oder von Yale rund um den Check-in. Wir schreiben den Code nie hier hin.
+Die Tür hat ein Codeschloss. Den Code bekommen Sie über Airbnb oder von Yale rund um den Check-in.
 
 Folgen Sie der Anleitung in Ihrer Airbnb-Nachricht.
 

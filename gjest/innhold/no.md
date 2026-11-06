@@ -19,10 +19,7 @@ feil_lasting: Innholdet kunne ikke lastes. Se Airbnb-meldingen din, eller prøv 
 
 ### Parkering {#parkering}
 
-Du kan parkere ved hytta. Det er også parkeringsplasser ovenfor hytta. Skal du parkere ovenfor:
-
-1. Kjør først ned til hytta og lass ut bagasjen.
-2. Kjør så tilbake samme vei og parker på plassene ovenfor hytta.
+Du kan parkere ved hytta. Det er også parkeringsplasser ovenfor hytta.
 
 ### Bomveien {#bom}
 
@@ -48,7 +45,7 @@ Er veien ikke brøytet når du kommer? Ring:
 
 ### Slik kommer du inn {#inn}
 
-Døra har kodelås. Koden får du på Airbnb eller fra Yale rundt innsjekk. Vi skriver aldri koden her.
+Døra har kodelås. Koden får du på Airbnb eller fra Yale rundt innsjekk.
 
 Følg instruksjonen i Airbnb-meldingen din.
 

@@ -4,7 +4,7 @@
 (function () {
   'use strict';
 
-  var VERSJON = '2 · 2026-11-06';
+  var VERSJON = '3 · 2026-11-06';
   var SPRAK = ['no', 'de', 'en'];
   var HTML_LANG = { no: 'nb', de: 'de', en: 'en' };
   var LAGRET = 'syningen-gjest-sprak';

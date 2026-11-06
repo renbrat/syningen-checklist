@@ -19,10 +19,7 @@ feil_lasting: The content could not be loaded. See your Airbnb message, or try a
 
 ### Parking {#parkering}
 
-You can park at the cabin. There are also parking spaces above the cabin. If you park above:
-
-1. First drive down to the cabin and unload your luggage.
-2. Then drive back the same way and park in the spaces above the cabin.
+You can park at the cabin. There are also parking spaces above the cabin.
 
 ### Toll road {#bom}
 
@@ -48,7 +45,7 @@ Has the road not been cleared of snow when you arrive? Call:
 
 ### How to get in {#inn}
 
-The door has a code lock. You will get the code on Airbnb or from Yale around check-in. We never write the code here.
+The door has a code lock. You will get the code on Airbnb or from Yale around check-in.
 
 Follow the instructions in your Airbnb message.
 
