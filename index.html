@@ -125,7 +125,18 @@ h2{text-wrap:balance}
 .field input,.field textarea{font:400 1rem/1.4 var(--font-body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px;width:100%;min-width:0}
 .field textarea{resize:vertical;min-height:84px}
 .rows{display:grid;gap:10px}
-.row{display:grid;grid-template-columns:76px minmax(0,1fr) auto;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px}
+.row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px}
+.thumbs{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px}
+.thumbs:empty{display:none}
+.thumb.mini{width:76px;flex:none}
+.rm{position:absolute;top:3px;right:3px;width:32px;height:32px;border:0;border-radius:50%;background:var(--scrim);color:var(--on-scrim);font-size:20px;line-height:1;cursor:pointer}
+.more{position:absolute;right:6px;bottom:6px;padding:5px 8px;border-radius:999px;background:var(--scrim);color:var(--on-scrim);font:600 .72rem/1 var(--font-mono)}
+.more[hidden]{display:none}
+.extrabox{display:grid;gap:8px;margin-top:8px}
+.extrabox summary{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:48px;padding:12px;border:1px dashed var(--line);border-radius:8px;cursor:pointer;font:700 1rem/1.2 var(--font-display)}
+.extrabox[open] summary{background:var(--surface)}
+.extrabox p{margin:0;font-size:.85rem}
+.xcnt{font:500 .8rem/1 var(--font-mono);color:var(--muted)}
 .thumb{position:relative;aspect-ratio:4/3;border-radius:5px;overflow:hidden;background:var(--surface2)}
 .thumb img{display:block;width:100%;height:100%;object-fit:cover}
 .thumb .ph{font-size:.66rem;padding:4px}
@@ -145,7 +156,11 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 #barTxt.err{color:var(--accent)}
 
 .lb{position:fixed;inset:0;z-index:20;background:var(--scrim);color:var(--on-scrim);display:grid;grid-template-rows:1fr auto;gap:12px;padding-top:max(16px,env(safe-area-inset-top,0px));padding-bottom:max(16px,env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-.lbimg{min-height:0;display:grid;place-items:center}
+.lbimg{position:relative;min-height:0;display:grid;place-items:center}
+.lbnav{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:60px;border:0;border-radius:8px;background:rgba(0,0,0,.5);color:#fff;font-size:32px;line-height:1;cursor:pointer}
+.lbnav.prev{left:0}
+.lbnav.next{right:0}
+.lbnav[hidden]{display:none}
 .lbimg img{max-width:100%;max-height:calc(100dvh - 200px);object-fit:contain;border-radius:4px}
 .lbcap{display:flex;align-items:flex-end;flex-wrap:wrap;justify-content:space-between;gap:12px}
 .lbbtns{display:flex;gap:8px;flex-wrap:wrap}
@@ -259,7 +274,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 </div>
 
 <div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="Bilde i stort format">
-  <div class="lbimg"><img id="lbImg" alt=""></div>
+  <div class="lbimg"><img id="lbImg" alt=""><button type="button" class="lbnav prev" id="lbPrev" aria-label="Forrige bilde" hidden>‹</button><button type="button" class="lbnav next" id="lbNext" aria-label="Neste bilde" hidden>›</button></div>
   <div class="lbcap">
     <div><p id="lbCap"></p><p class="lbhint">Du kan også trykke og holde på bildet for å lagre det.</p></div>
     <div class="lbbtns"><button type="button" class="btn" id="lbSave">Lagre på telefonen</button><button type="button" class="btn" id="lbClose">Lukk</button></div>
@@ -396,6 +411,12 @@ var ROOMS=[
     'Tørke støv',
     'Rengjøre gulvet',
     'Sette ventilasjonen ned på lav']},
+  {key:'ute',name:'Ute',items:[
+    'Binde bålpanna til stolpen',
+    'Sette stolene i klem mellom bord og vegg',
+    'Kontrollere stampen',
+    'Legge klart uteveden bak stampen og dekke den godt over',
+    'Henge opp koster og spader']},
   {key:'forlate',name:'Forlate hytta',items:[
     'Sørg for at alle vinduer er lukket, persienner trukket ned (også i annekset)',
     'Sørg for at alle dører til alle rommene er åpne for å få best mulig luftsirkulasjon',
@@ -443,6 +464,19 @@ var mode='view';
 var drafts=new Map();
 var saving=false,barMsg='',barErr=false,progress='';
 var cards={},rows={};
+var MAXPH=6,draftSeq=0;
+function photoNames(key,d){
+  if(!d||!d.savedAt)return [];
+  var n=(typeof d.count==='number'&&d.count>0)?Math.min(Math.floor(d.count),MAXPH):0;
+  if(!n)return [key];
+  var a=[];
+  for(var i=1;i<=n;i++)a.push(key+'-'+i);
+  return a;
+}
+function spotUrls(key){
+  var d=spotData[key];
+  return photoNames(key,d).map(function(nm){return api.photoUrl(nm,d.savedAt);});
+}
 
 function setImg(img,ph,src,def){
   if(src){
@@ -480,8 +514,10 @@ function buildView(){
       img.hidden=true;
       var ph=el('span','ph','Henter …');
       img.onerror=function(){img.hidden=true;ph.hidden=false;ph.textContent='Bildet kan ikke vises';};
-      shot.append(img,ph);
-      shot.onclick=function(){if(!img.hidden)openLb(s,img.src);};
+      var more=el('span','more','');
+      more.hidden=true;
+      shot.append(img,ph,more);
+      shot.onclick=function(){if(!img.hidden)openLb(s,0);};
       var cap=el('figcaption','cap');
       cap.append(el('div','lbl',s.label));
       if(s.hint)cap.append(el('div','hint',s.hint));
@@ -491,7 +527,7 @@ function buildView(){
       cap.append(stampline,tag);
       fig.append(shot,cap);
       grid.append(fig);
-      cards[s.key]={img:img,ph:ph,stampline:stampline,tag:tag};
+      cards[s.key]={img:img,ph:ph,more:more,stampline:stampline,tag:tag};
     });
     sec.append(grid);
     host.append(sec);
@@ -507,12 +543,6 @@ function buildForm(){
     var list=el('div','rows');
     SPOTS.filter(function(s){return s.zone===z;}).forEach(function(s){
       var row=el('div','row');
-      var thumb=el('div','thumb');
-      var img=el('img');
-      img.alt='';
-      img.hidden=true;
-      var ph=el('span','ph','Ingen');
-      thumb.append(img,ph);
       var txt=el('div','rowtxt');
       txt.append(el('div','lbl',s.label));
       if(s.hint)txt.append(el('div','hint',s.hint));
@@ -523,13 +553,15 @@ function buildForm(){
       var input=document.createElement('input');
       input.type='file';
       input.accept='image/*';
+      input.multiple=true;
       input.className='pickinput';
-      input.setAttribute('aria-label','Bilde: '+z+', '+s.label);
-      input.onchange=function(){var f=input.files&&input.files[0];if(f)pick(s.key,f);};
+      input.setAttribute('aria-label','Bilder: '+z+', '+s.label);
+      input.onchange=function(){var fs=Array.prototype.slice.call(input.files||[]);if(fs.length)pick(s.key,fs);};
       btn.append(btnTxt,input);
-      row.append(thumb,txt,btn);
+      var thumbs=el('div','thumbs');
+      row.append(txt,btn,thumbs);
       list.append(row);
-      rows[s.key]={img:img,ph:ph,tag:tag,btn:btn,btnTxt:btnTxt,input:input};
+      rows[s.key]={thumbs:thumbs,sig:'',busy:false,tag:tag,btn:btn,btnTxt:btnTxt,input:input};
     });
     sec.append(list);
     host.append(sec);
@@ -565,7 +597,7 @@ function renderStatus(){
   var line=[d?fLong.format(d):'',ago(status.leftAt)].filter(Boolean).join(' · ');
   if(line)box.append(el('p','meta',line));
   var n=SPOTS.filter(function(s){return spotData[s.key]&&spotData[s.key].leftAt===status.leftAt;}).length;
-  box.append(el('p','meta',n+' av '+SPOTS.length+' bilder er fra denne avreisen'));
+  box.append(el('p','meta',n+' av '+SPOTS.length+' steder har bilder fra denne avreisen'));
   if(typeof status.checkTotal==='number'&&status.checkTotal>0){
     box.append(el('p','meta','Sjekkliste: '+status.checkDone+' av '+status.checkTotal+' punkter krysset av'));
   }
@@ -576,30 +608,71 @@ function renderStatus(){
   }
 }
 
+function miniThumb(src,onRemove){
+  var t=el('div','thumb mini');
+  var img=el('img');
+  img.alt='';
+  img.decoding='async';
+  img.src=src;
+  t.append(img);
+  if(onRemove){
+    var b=el('button','rm','×');
+    b.type='button';
+    b.setAttribute('aria-label','Fjern bildet');
+    b.onclick=onRemove;
+    t.append(b);
+  }
+  return t;
+}
+function renderThumbs(key,arr,urls){
+  var r=rows[key];
+  var sig=arr.length?'d:'+arr.map(function(x){return x.id;}).join(','):'u:'+urls.join(',');
+  if(r.sig===sig)return;
+  r.sig=sig;
+  r.thumbs.textContent='';
+  if(arr.length){
+    arr.forEach(function(x){r.thumbs.append(miniThumb(x.dataUrl,function(){removeDraft(key,x.id);}));});
+  }else{
+    urls.forEach(function(u){r.thumbs.append(miniThumb(u));});
+  }
+}
+function removeDraft(key,id){
+  var arr=(drafts.get(key)||[]).filter(function(x){return x.id!==id;});
+  if(arr.length)drafts.set(key,arr);else drafts.delete(key);
+  barMsg='';barErr=false;
+  updateSpot(key);
+  updateBar();
+}
 function updateSpot(key){
-  var d=spotData[key],dr=drafts.get(key);
-  var oldSrc=d&&d.savedAt?api.photoUrl(key,d.savedAt):null;
+  var d=spotData[key],arr=drafts.get(key)||[];
+  var urls=spotUrls(key);
   var c=cards[key],r=rows[key];
   if(!c||!r)return;
   var def=!db?'Ingen bilde':(heard.spots?'Ingen bilde ennå':'Henter …');
-  setImg(c.img,c.ph,oldSrc,def);
+  setImg(c.img,c.ph,urls[0]||null,def);
+  c.more.hidden=urls.length<2;
+  c.more.textContent=urls.length+' bilder';
   var by=d&&d.by?d.by:'';
   c.stampline.textContent=d&&d.leftAt?shortDate(d.leftAt)+(by?' · '+by:''):'';
   var stale=!!(status&&d&&d.leftAt&&status.leftAt&&d.leftAt<status.leftAt);
   c.tag.hidden=!stale;
-  setImg(r.img,r.ph,dr?dr.dataUrl:oldSrc,'Ingen');
-  if(dr){r.tag.className='tag ok';r.tag.textContent='Nytt bilde';}
-  else if(d&&d.leftAt){r.tag.className='tag plain';r.tag.textContent='Fra '+shortDate(d.leftAt);}
+  renderThumbs(key,arr,urls);
+  if(arr.length){r.tag.className='tag ok';r.tag.textContent=(arr.length===1?'1 nytt bilde':arr.length+' nye bilder')+' · erstatter forrige';}
+  else if(d&&d.leftAt){r.tag.className='tag plain';r.tag.textContent='Fra '+shortDate(d.leftAt)+(urls.length>1?' · '+urls.length+' bilder':'');}
   else{r.tag.className='tag warn';r.tag.textContent='Mangler bilde';}
-  r.btnTxt.textContent=(dr||d)?'Bytt bilde':'Ta bilde';
+  if(!r.busy){
+    r.btnTxt.textContent=arr.length?'Legg til flere':(urls.length?'Bytt bilde':'Ta bilde');
+    r.input.disabled=arr.length>=MAXPH;
+  }
 }
 
 function updateBar(){
   var t=$('barTxt');
-  var n=drafts.size;
+  var n=drafts.size,np=0;
+  drafts.forEach(function(a){np+=a.length;});
   if(saving){t.textContent=progress;t.className='';}
   else if(barMsg){t.textContent=barMsg;t.className=barErr?'err':'';}
-  else{t.textContent=n+' av '+SPOTS.length+' valgt · lagres når du trykker «Lagre avreise»';t.className='';}
+  else{t.textContent=n+' av '+SPOTS.length+' steder · '+np+(np===1?' bilde':' bilder')+' · lagres når du trykker «Lagre avreise»';t.className='';}
   $('saveBtn').disabled=saving||n===0;
 }
 
@@ -625,7 +698,7 @@ function setMode(m){
 
 /* ---- Sjekkliste ---- */
 var checked={},serverChecked={},pending={},inflight={};
-var flushing=false,roomIdx=0,canCheck=true,itemEls={},resetArmed=false;
+var flushing=false,roomIdx=0,canCheck=true,itemEls={},resetArmed=false,extraCnt=null;
 
 function itemId(r,i){return r.key+'-'+i;}
 function roomDone(r){var n=0;r.items.forEach(function(_,i){if(checked[itemId(r,i)])n++;});return n;}
@@ -678,13 +751,19 @@ function renderRoom(){
   }
   r.items.forEach(function(t,i){addItem(ul,itemId(r,i),t);});
   host.append(ul);
+  extraCnt=null;
   if(r.extras&&r.extras.length){
-    var eh=el('div','extrahead');
-    eh.append(el('h4',null,'The Bjørg extras'),el('p','muted','Frivillig, og teller ikke med i fremdriften.'));
-    host.append(eh);
+    var det=document.createElement('details');
+    det.className='extrabox';
+    var sm=document.createElement('summary');
+    var cnt=el('span','xcnt','');
+    sm.append(el('span',null,'The Bjørg extras'),cnt);
+    det.append(sm,el('p','muted','Frivillig. Har du kapasitet til litt ekstra? Teller ikke med i fremdriften.'));
     var xl=el('ul','checks extras');
     r.extras.forEach(function(t,i){addItem(xl,r.key+'-x'+i,t);});
-    host.append(xl);
+    det.append(xl);
+    host.append(det);
+    extraCnt=cnt;
   }
   var nav=el('div','roomnav');
   if(roomIdx<ROOMS.length-1){
@@ -715,6 +794,11 @@ function updateChecklist(){
     b.classList.toggle('full',full);
     b.lastChild.textContent=(full?'✓ ':'')+n+'/'+r.items.length;
   });
+  if(extraCnt){
+    var rr=ROOMS[roomIdx],xn=0;
+    (rr.extras||[]).forEach(function(_,i){if(checked[rr.key+'-x'+i])xn++;});
+    extraCnt.textContent=xn+'/'+(rr.extras||[]).length;
+  }
   Object.keys(itemEls).forEach(function(id){
     var o=itemEls[id],on=!!checked[id];
     if(o.inp.checked!==on)o.inp.checked=on;
@@ -770,26 +854,39 @@ function toast(msg){
 }
 
 var lbCur=null;
-function openLb(s,src){
-  $('lbImg').src=src;
-  $('lbImg').alt=s.zone+': '+s.label;
-  var d=spotData[s.key];
-  var stamp=d&&d.leftAt?' · '+shortDate(d.leftAt)+(d.by?' · '+d.by:''):'';
-  $('lbCap').textContent=s.zone+': '+s.label+stamp;
+function openLb(s,i){
+  var urls=spotUrls(s.key);
+  if(!urls.length)return;
+  lbCur={s:s,urls:urls,names:photoNames(s.key,spotData[s.key]),i:i||0,url:'',fname:'',file:null};
   $('lb').hidden=false;
+  lbShow(0);
   $('lbClose').focus();
-  var cur={key:s.key,url:src,file:null};
-  lbCur=cur;
-  var fname='syningen-'+s.key+'.jpg';
-  fetch(src).then(function(r){return r.blob();}).then(function(b){
-    if(lbCur===cur)cur.file=new File([b],fname,{type:'image/jpeg'});
+}
+function lbShow(step){
+  var c=lbCur;
+  if(!c)return;
+  var n=c.urls.length;
+  c.i=((c.i+step)%n+n)%n;
+  c.url=c.urls[c.i];
+  c.fname='syningen-'+c.names[c.i]+'.jpg';
+  c.file=null;
+  var s=c.s,d=spotData[s.key];
+  $('lbImg').src=c.url;
+  $('lbImg').alt=s.zone+': '+s.label;
+  var stamp=d&&d.leftAt?' · '+shortDate(d.leftAt)+(d.by?' · '+d.by:''):'';
+  $('lbCap').textContent=s.zone+': '+s.label+(n>1?' ('+(c.i+1)+'/'+n+')':'')+stamp;
+  $('lbPrev').hidden=n<2;
+  $('lbNext').hidden=n<2;
+  var url=c.url,fname=c.fname;
+  fetch(url).then(function(r){return r.blob();}).then(function(b){
+    if(lbCur===c&&c.url===url)c.file=new File([b],fname,{type:'image/jpeg'});
   }).catch(function(){});
 }
 function closeLb(){$('lb').hidden=true;$('lbImg').removeAttribute('src');lbCur=null;}
 async function saveCurrent(){
   var cur=lbCur;
   if(!cur)return;
-  var fname='syningen-'+cur.key+'.jpg';
+  var fname=cur.fname;
   try{
     if(cur.file&&navigator.canShare&&navigator.canShare({files:[cur.file]})){
       await navigator.share({files:[cur.file],title:'Syningen'});
@@ -839,21 +936,27 @@ function toDataUrl(blob){
   });
 }
 
-async function pick(key,file){
-  if(!file)return;
+async function pick(key,files){
   var r=rows[key];
+  if(!r||!files||!files.length)return;
+  r.busy=true;
   r.input.disabled=true;
   r.btnTxt.textContent='Behandler …';
+  var arr=(drafts.get(key)||[]).slice();
+  barMsg='';barErr=false;
   try{
-    var blob=await compress(file);
-    var dataUrl=await toDataUrl(blob);
-    drafts.set(key,{blob:blob,dataUrl:dataUrl});
-    barMsg='';barErr=false;
+    for(var i=0;i<files.length;i++){
+      if(arr.length>=MAXPH){barMsg='Maks '+MAXPH+' bilder per sted.';barErr=true;break;}
+      var blob=await compress(files[i]);
+      var dataUrl=await toDataUrl(blob);
+      arr.push({id:++draftSeq,blob:blob,dataUrl:dataUrl});
+    }
   }catch(e){
     barMsg='Kunne ikke lese bildet. Prøv et annet.';barErr=true;
   }finally{
+    if(arr.length)drafts.set(key,arr);
     r.input.value='';
-    r.input.disabled=false;
+    r.busy=false;
     updateSpot(key);
     updateBar();
   }
@@ -891,13 +994,16 @@ async function save(){
   var done=0,lastCode='';
   for(var i=0;i<keys.length;i++){
     var key=keys[i];
-    progress='Lagrer '+(done+1)+' av '+keys.length+' …';
-    updateBar();
+    var arr=drafts.get(key);
     try{
       var savedAt=new Date().toISOString();
-      await uploadRetry(key,drafts.get(key).blob);
-      await api.setDoc('spots/'+key,{leftAt:date,by:name,savedAt:savedAt});
-      spotData[key]={leftAt:date,by:name,savedAt:savedAt};
+      for(var j=0;j<arr.length;j++){
+        progress='Lagrer sted '+(done+1)+' av '+keys.length+(arr.length>1?', bilde '+(j+1)+' av '+arr.length:'')+' …';
+        updateBar();
+        await uploadRetry(key+'-'+(j+1),arr[j].blob);
+      }
+      await api.setDoc('spots/'+key,{leftAt:date,by:name,savedAt:savedAt,count:arr.length});
+      spotData[key]={leftAt:date,by:name,savedAt:savedAt,count:arr.length};
       epoch++;
       drafts.delete(key);
       done++;
@@ -993,7 +1099,21 @@ async function init(){
   $('lbClose').onclick=closeLb;
   $('lbSave').onclick=saveCurrent;
   $('lb').onclick=function(e){if(e.target===$('lb')||e.target.className==='lbimg')closeLb();};
-  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('lb').hidden)closeLb();});
+  $('lbPrev').onclick=function(){lbShow(-1);};
+  $('lbNext').onclick=function(){lbShow(1);};
+  var tx=null;
+  $('lb').addEventListener('touchstart',function(e){tx=e.touches&&e.touches[0]?e.touches[0].clientX:null;},{passive:true});
+  $('lb').addEventListener('touchend',function(e){
+    if(tx==null||!e.changedTouches||!e.changedTouches[0])return;
+    var dx=e.changedTouches[0].clientX-tx;tx=null;
+    if(Math.abs(dx)>60)lbShow(dx<0?1:-1);
+  },{passive:true});
+  document.addEventListener('keydown',function(e){
+    if($('lb').hidden)return;
+    if(e.key==='Escape')closeLb();
+    else if(e.key==='ArrowLeft')lbShow(-1);
+    else if(e.key==='ArrowRight')lbShow(1);
+  });
   $('panelReg').addEventListener('submit',function(e){e.preventDefault();});
 
   db=api;
